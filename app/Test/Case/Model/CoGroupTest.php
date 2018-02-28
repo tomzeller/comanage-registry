@@ -46,8 +46,6 @@ class CoGroupTest extends CakeTestCase {
 
   /**
    * Set up the test case.
-   *
-   * @return void
    */
   public function setUp() {
     parent::setUp();
@@ -55,9 +53,7 @@ class CoGroupTest extends CakeTestCase {
   }
 
   /**
-   * Test down the test case.
-   *
-   * @return void
+   * Tear down the test case.
    */
   public function tearDown() {
     unset($this->CoGroup);
@@ -81,11 +77,7 @@ class CoGroupTest extends CakeTestCase {
   }
 
   /**
-   * Test addDefaults method of class CoGroup.
-   *
    * Test adding default groups to a Co.
-   *
-   * @return void
    */
   public function testAddDefaultsToCo() {
 
@@ -177,11 +169,7 @@ class CoGroupTest extends CakeTestCase {
   }
 
   /**
-   * Test addDefaults method of class CoGroup.
-   *
    * Test adding default groups to a Cou.
-   *
-   * @return void
    */
   public function testAddDefaultsToCou() {
 
