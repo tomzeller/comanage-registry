@@ -67,6 +67,8 @@ class CoGroupTest extends CakeTestCase {
   /**
    * Test addDefaults method of class CoGroup.
    *
+   * Test adding default groups to a Co.
+   *
    * @return void
    */
   public function testAddDefaultsToCo() {
@@ -158,6 +160,13 @@ class CoGroupTest extends CakeTestCase {
     $this->assertEquals($expected, $result);
   }
 
+  /**
+   * Test addDefaults method of class CoGroup.
+   *
+   * Test adding default groups to a Cou.
+   *
+   * @return void
+   */
   public function testAddDefaultsToCou() {
 
     // Get a Cou object.
