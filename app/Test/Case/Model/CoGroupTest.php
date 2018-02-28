@@ -65,6 +65,22 @@ class CoGroupTest extends CakeTestCase {
   }
 
   /**
+   * Test adding default groups to a Co that does not exist.
+   */
+  public function testAddDefaultsNoCoId() {
+    $this->setExpectedException(InvalidArgumentException::class, 'CO "CO_ID_THAT_DOES_NOT_EXIST" Not Found');
+    $this->CoGroup->addDefaults('CO_ID_THAT_DOES_NOT_EXIST');
+  }
+
+  /**
+   * Test adding default groups to a Cou that does not exist.
+   */
+  public function testAddDefaultsNoCouId() {
+    $this->setExpectedException(InvalidArgumentException::class, 'COU "COU_ID_THAT_DOES_NOT_EXIST" Not Found');
+    $this->CoGroup->addDefaults(1, 'COU_ID_THAT_DOES_NOT_EXIST');
+  }
+
+  /**
    * Test addDefaults method of class CoGroup.
    *
    * Test adding default groups to a Co.
