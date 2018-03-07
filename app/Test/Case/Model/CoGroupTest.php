@@ -117,7 +117,7 @@ class CoGroupTest extends CakeTestCase {
     $expected = array(
       array(
         'CoGroup' => array(
-          'id'               => '7',
+          'id'               => '1',
           'co_id'            => '2',
           'cou_id'           => NULL,
           'name'             => 'CO:admins',
@@ -133,7 +133,7 @@ class CoGroupTest extends CakeTestCase {
         )),
       array(
         'CoGroup' => array(
-          'id'               => '8',
+          'id'               => '2',
           'co_id'            => '2',
           'cou_id'           => NULL,
           'name'             => 'CO:members:active',
@@ -149,7 +149,7 @@ class CoGroupTest extends CakeTestCase {
         )),
       array(
         'CoGroup' => array(
-          'id'               => '9',
+          'id'               => '3',
           'co_id'            => '2',
           'cou_id'           => NULL,
           'name'             => 'CO:members:all',
@@ -209,7 +209,7 @@ class CoGroupTest extends CakeTestCase {
     $expected = array(
       array(
         'CoGroup' => array(
-          'id'               => '7',
+          'id'               => '1',
           'co_id'            => '2',
           'cou_id'           => '1',
           'name'             => 'CO:COU:Test COU 1:admins',
@@ -225,7 +225,7 @@ class CoGroupTest extends CakeTestCase {
         )),
       array(
         'CoGroup' => array(
-          'id'               => '8',
+          'id'               => '2',
           'co_id'            => '2',
           'cou_id'           => '1',
           'name'             => 'CO:COU:Test COU 1:members:active',
@@ -241,7 +241,7 @@ class CoGroupTest extends CakeTestCase {
         )),
       array(
         'CoGroup' => array(
-          'id'               => '9',
+          'id'               => '3',
           'co_id'            => '2',
           'cou_id'           => '1',
           'name'             => 'CO:COU:Test COU 1:members:all',
@@ -261,12 +261,45 @@ class CoGroupTest extends CakeTestCase {
   }
 
   /**
-   * testAdminCoGroupId method
-   *
-   * @return void
+   * Test obtaining the ID of the CO admin group which does not exist.
    */
-  public function testAdminCoGroupId() {
-    $this->markTestIncomplete('testAdminCoGroupId not implemented.');
+  public function testAdminCoGroupIdCoNotFound() {
+    $this->setExpectedException(InvalidArgumentException::class, 'Group admins Not Found');
+    $this->CoGroup->adminCoGroupId(2);
+  }
+
+  /**
+   * Test obtaining the ID of the admin group for CO with ID 1.
+   */
+  public function testAdminCoGroupIdCo() {
+    $expected = 1;
+    $this->CoGroup->addDefaults(1);
+    $actual = $this->CoGroup->adminCoGroupId(1);
+    $this->assertEquals($expected, $actual);
+  }
+
+  /**
+   * Test obtaining the ID of the admin group for CO with ID 2.
+   */
+  public function testAdminCoGroupIdCos() {
+    $expected = 4;
+    $this->CoGroup->addDefaults(1);
+    $this->CoGroup->addDefaults(2);
+    $actual = $this->CoGroup->adminCoGroupId(2);
+    $this->assertEquals($expected, $actual);
+  }
+
+  /**
+   * Test obtaining the ID of the COU admin group.
+   */
+  public function testAdminCoGroupIdCou() {
+    $expected = 7;
+    $this->CoGroup->addDefaults(1);
+    $this->CoGroup->addDefaults(2);
+    $this->CoGroup->addDefaults(2, 1);
+    $actual = $this->CoGroup->adminCoGroupId(2, 1);
+
+    $this->assertEquals($expected, $actual);
   }
 
   /**
