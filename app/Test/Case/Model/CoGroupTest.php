@@ -383,4 +383,179 @@ class CoGroupTest extends CakeTestCase {
     $this->markTestIncomplete('testReconcileAutomaticGroup not implemented.');
   }
 
+  /**
+   * Test creating a group.
+   */
+  public function testCreateCoGroup() {
+
+    // Find all groups with CO id 2, should not find any.
+    $args = array();
+    $args['conditions']['CoGroup.co_id'] = '2';
+    $args['conditions']['CoGroup.deleted'] = false;
+    $args['contain'] = false;
+    $result = $this->CoGroup->find('all', $args);
+    $expected = array();
+    $this->assertEquals($expected, $result);
+
+    // Create the group
+    $group = array();
+    $group['auto'] = false;
+    $group['co_id'] = 2;
+    $group['description'] = 'Test Create Group';
+    $group['group_type'] = GroupEnum::Standard;
+    $group['name'] = 'testCreateGroup';
+    $group['open'] = false;
+    $group['status'] = SuspendableStatusEnum::Active;
+
+    // Test result of save operation.
+    $result = $this->CoGroup->save($group);
+    $this->assertNotNull($result);
+    $this->assertNotEmpty($result);
+    $result = Hash::remove($result, 'CoGroup.created'); // Ignore 'created' timestamp
+    $result = Hash::remove($result, 'CoGroup.modified'); // Ignore 'modified' timestamp
+    $expected = array(
+      'CoGroup' => array(
+        'id'               => '1',
+        'co_id'            => '2',
+        'name'             => 'testCreateGroup',
+        'description'      => 'Test Create Group',
+        'open'             => false,
+        'status'           => 'A',
+        'group_type'       => 'S',
+        'auto'             => false,
+        'co_group_id'      => NULL,
+        'revision'         => '0',
+        'deleted'          => false,
+        'actor_identifier' => NULL,
+      ),
+    );
+    $this->assertEquals($expected, $result);
+
+    // Find all groups with Co id 2, should find one.
+    $result = $this->CoGroup->find('all', $args);
+
+    // Test result of find operation.
+    $result = Hash::remove($result, '{n}.CoGroup.created'); // Ignore 'created' timestamp
+    $result = Hash::remove($result, '{n}.CoGroup.modified'); // Ignore 'modified' timestamp
+    $expected = array($expected);
+    $expected['0']['CoGroup']['cou_id'] = NULL; // Add COU ID to expected
+    $this->assertEquals($expected, $result);
+  }
+
+
+  /**
+   * Test creating a group.
+   */
+  public function testCreateCouGroup() {
+
+    // Find all groups with CO id 2, should not find any.
+    $args = array();
+    $args['conditions']['CoGroup.co_id'] = '2';
+    $args['conditions']['CoGroup.deleted'] = false;
+    $args['contain'] = false;
+    $result = $this->CoGroup->find('all', $args);
+    $expected = array();
+    $this->assertEquals($expected, $result);
+
+    // Create the group
+    $group = array();
+    $group['auto'] = false;
+    $group['co_id'] = 2;
+    $group['cou_id'] = 1;
+    $group['description'] = 'Test Create Group';
+    $group['group_type'] = GroupEnum::Standard;
+    $group['name'] = 'testCreateGroup';
+    $group['open'] = false;
+    $group['status'] = SuspendableStatusEnum::Active;
+
+    // Test result of save operation.
+    $result = $this->CoGroup->save($group);
+    $this->assertNotNull($result);
+    $this->assertNotEmpty($result);
+    $result = Hash::remove($result, 'CoGroup.created'); // Ignore 'created' timestamp
+    $result = Hash::remove($result, 'CoGroup.modified'); // Ignore 'modified' timestamp
+    $expected = array(
+      'CoGroup' => array(
+        'id'               => '1',
+        'co_id'            => '2',
+        'cou_id'           => '1',
+        'name'             => 'testCreateGroup',
+        'description'      => 'Test Create Group',
+        'open'             => false,
+        'status'           => 'A',
+        'group_type'       => 'S',
+        'auto'             => false,
+        'co_group_id'      => NULL,
+        'revision'         => '0',
+        'deleted'          => false,
+        'actor_identifier' => NULL,
+      ),
+    );
+    $this->assertEquals($expected, $result);
+
+    // Find all groups with Co id 2, should find one.
+    $result = $this->CoGroup->find('all', $args);
+
+    // Test result of find operation.
+    $result = Hash::remove($result, '{n}.CoGroup.created'); // Ignore 'created' timestamp
+    $result = Hash::remove($result, '{n}.CoGroup.modified'); // Ignore 'modified' timestamp
+    $expected = array($expected);
+    $this->assertEquals($expected, $result);
+  }
+
+  /**
+   * Test modifying a group.
+   */
+  public function testModifyGroup() {
+
+    // Create a group.
+    $this->testCreateCouGroup();
+
+    // Find the newly created group.
+    $args = array();
+    $args['conditions']['CoGroup.name'] = 'testCreateGroup';
+    $args['conditions']['CoGroup.co_id'] = '2';
+    $args['conditions']['CoGroup.cou_id'] = 1;
+    $args['conditions']['CoGroup.deleted'] = false;
+    $args['contain'] = false;
+    $result = $this->CoGroup->find('first', $args);
+    $this->assertNotNull($result);
+    $this->assertNotEmpty($result);
+    $result = Hash::remove($result, 'CoGroup.created'); // Ignore 'created' timestamp
+    $result = Hash::remove($result, 'CoGroup.modified'); // Ignore 'modified' timestamp
+    $expected = array(
+      'CoGroup' => array(
+        'id'               => '1',
+        'co_id'            => '2',
+        'cou_id'           => '1',
+        'name'             => 'testCreateGroup',
+        'description'      => 'Test Create Group',
+        'open'             => false,
+        'status'           => 'A',
+        'group_type'       => 'S',
+        'auto'             => false,
+        'co_group_id'      => NULL,
+        'revision'         => '0',
+        'deleted'          => false,
+        'actor_identifier' => NULL,
+      ),
+    );
+    $this->assertEquals($expected, $result);
+
+    // Modify the group.
+    $result['0']['CoGroup']['description'] = 'New Description';
+
+    if (!$this->CoGroup->save($result)) {
+      $this->fail("Test failed with errors :\n".var_export($this->CoGroup->validationErrors, true));
+    }
+
+    // Find group after modification and assert modification
+    $result = $this->CoGroup->find('first', $args);
+    $result = Hash::remove($result, 'CoGroup.created'); // Ignore 'created' timestamp
+    $result = Hash::remove($result, 'CoGroup.modified'); // Ignore 'modified' timestamp
+    $expected['CoGroup']['revision'] = '1';
+    $expected['CoGroup']['description'] = 'New Description';
+    $this->assertEquals($expected, $result);
+  }
+
 }
