@@ -388,9 +388,9 @@ class CoGroupTest extends CakeTestCase {
    */
   public function testCreateCoGroup() {
 
-    // Find all groups with CO id 2, should not find any.
+    // Assert that the group does not already exist.
     $args = array();
-    $args['conditions']['CoGroup.co_id'] = '2';
+    $args['conditions']['name'] = 'testCreateGroup';
     $args['conditions']['CoGroup.deleted'] = false;
     $args['contain'] = false;
     $result = $this->CoGroup->find('all', $args);
@@ -448,9 +448,9 @@ class CoGroupTest extends CakeTestCase {
    */
   public function testCreateCouGroup() {
 
-    // Find all groups with CO id 2, should not find any.
+    // Assert that the group does not already exist.
     $args = array();
-    $args['conditions']['CoGroup.co_id'] = '2';
+    $args['conditions']['name'] = 'testCreateGroup';
     $args['conditions']['CoGroup.deleted'] = false;
     $args['contain'] = false;
     $result = $this->CoGroup->find('all', $args);
