@@ -543,7 +543,7 @@ class CoGroupTest extends CakeTestCase {
     $this->assertEquals($expected, $result);
 
     // Modify the group.
-    $result['0']['CoGroup']['description'] = 'New Description';
+    $result['CoGroup']['description'] = 'New Description';
 
     if (!$this->CoGroup->save($result)) {
       $this->fail("Test failed with errors :\n".var_export($this->CoGroup->validationErrors, true));
