@@ -27,6 +27,6 @@
 
 class CoEnrollmentFlowFixture extends CakeTestFixture {
 
-  // Import schema for the model from the default database
-  public $import = array('model' => 'CoEnrollmentFlow');
+  // Import schema and records for the model from the default database
+  public $import = array('model' => 'CoEnrollmentFlow', 'records' => true);
 }

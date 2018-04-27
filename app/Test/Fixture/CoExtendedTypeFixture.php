@@ -27,6 +27,6 @@
 
 class CoExtendedTypeFixture extends CakeTestFixture {
 
-  // Import schema for the model from the default database
-  public $import = array('model' => 'CoExtendedType');
+  // Import schema and records for the model from the default database
+  public $import = array('model' => 'CoExtendedType', 'records' => true);
 }

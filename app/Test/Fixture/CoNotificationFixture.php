@@ -27,6 +27,6 @@
 
 class CoNotificationFixture extends CakeTestFixture {
 
-  // Import schema for the model from the default database
-  public $import = array('model' => 'CoNotification');
+  // Import schema and records for the model from the default database
+  public $import = array('model' => 'CoNotification', 'records' => true);
 }

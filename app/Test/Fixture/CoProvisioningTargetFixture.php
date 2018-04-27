@@ -27,6 +27,6 @@
 
 class CoProvisioningTargetFixture extends CakeTestFixture {
 
-  // Import schema for the model from the default database
-  public $import = array('model' => 'CoProvisioningTarget');
+  // Import schema and records for the model from the default database
+  public $import = array('model' => 'CoProvisioningTarget', 'records' => true);
 }

@@ -1,6 +1,6 @@
 <?php
 /**
- * COmanage Registry CO Model Test
+ * COmanage Registry Co Model Test
  *
  * Portions licensed to the University Corporation for Advanced Internet
  * Development, Inc. ("UCAID") under one or more contributor license agreements.
@@ -28,8 +28,9 @@
 App::uses('Co', 'Model');
 
 class CoTest extends CakeTestCase {
+
   public $fixtures = array(
-    'app.Co',
+    'app.CoTest/CoTestCo',
     'app.CoEnrollmentFlow',
     'app.CoExpirationPolicy',
     'app.CoExtendedType',

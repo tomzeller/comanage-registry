@@ -27,6 +27,6 @@
 
 class CoSettingFixture extends CakeTestFixture {
 
-  // Import schema for the model from the default database
-  public $import = array('model' => 'CoSetting');
+  // Import schema and records for the model from the default database
+  public $import = array('model' => 'CoSetting', 'records' => true);
 }

@@ -18,7 +18,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- * 
+ *
  * @link          http://www.internet2.edu/comanage COmanage Project
  * @package       registry
  * @since         COmanage Registry v0.9.4
@@ -26,6 +26,7 @@
  */
 
 class CoGroupFixture extends CakeTestFixture {
-  // Import schema for the model from the default database.
-  public $import = array('model' => 'CoGroup', 'connection' => 'default');
+
+  // Import schema and records for the model from the default database
+  public $import = array('model' => 'CoGroup', 'records' => true);
 }

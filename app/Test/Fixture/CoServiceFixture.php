@@ -27,6 +27,6 @@
 
 class CoServiceFixture extends CakeTestFixture {
 
-  // Import schema for the model from the default database
-  public $import = array('model' => 'CoService');
+  // Import schema and records for the model from the default database
+  public $import = array('model' => 'CoService', 'records' => true);
 }

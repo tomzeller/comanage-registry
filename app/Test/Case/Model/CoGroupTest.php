@@ -1,6 +1,6 @@
 <?php
 /**
- * COmanage Registry CO Group Test
+ * COmanage Registry CoGroup Model Test
  *
  * Portions licensed to the University Corporation for Advanced Internet
  * Development, Inc. ("UCAID") under one or more contributor license agreements.
@@ -34,14 +34,22 @@ class CoGroupTest extends CakeTestCase {
     'app.Cou',
     'app.CoEnrollmentFlow',
     'app.CoExpirationPolicy',
+    'app.CoExtendedType',
     'app.CoGroup',
     'app.CoGroupMember',
     'app.CoNotification',
+    'app.CoOrgIdentityLink',
+    'app.CoPerson',
+    'app.CoPersonRole',
     'app.CoProvisioningExport',
     'app.CoProvisioningTarget',
     'app.CoService',
     'app.CoSetting',
-    'app.HistoryRecord'
+    'app.EmailAddress',
+    'app.HistoryRecord',
+    'app.Identifier',
+    'app.Name',
+    'app.SshKey',
   );
 
   /**
@@ -58,6 +66,34 @@ class CoGroupTest extends CakeTestCase {
   public function tearDown() {
     unset($this->CoGroup);
     parent::tearDown();
+  }
+
+  /**
+   * Create a Cou with id 1 in Co with id 1.
+   */
+  public function createTestCou() {
+
+    // Get a Cou object.
+    $Cou = ClassRegistry::init('Cou');
+
+    // Find Cou with id 1, should not exist.
+    $args = array();
+    $args['conditions']['Cou.id'] = '1';
+    $args['contain'] = false;
+    $result = $Cou->find('first', $args);
+    $this->assertEmpty($result, "Cou with id 1 should not exist");
+
+    // Create Cou with id 1.
+    $cou = array(
+      'Cou' => array(
+        'co_id'       => '1',
+        'name'        => 'Test COU',
+        'description' => 'Test COU Description',
+        'status'      => StatusEnum::Active
+      )
+    );
+    $Cou->save($cou);
+    $this->assertEquals('1', $Cou->id, "Cou should have id 1");
   }
 
   /**
@@ -84,13 +120,23 @@ class CoGroupTest extends CakeTestCase {
     // Get a Co object.
     $Co = ClassRegistry::init('Co');
 
-    // Find Co with id 2 from the fixture.
+    // Find Co with id 2, should not exist.
     $args = array();
     $args['conditions']['Co.id'] = '2';
     $args['contain'] = false;
     $result = $Co->find('first', $args);
-    $this->assertNotNull($result);
-    $this->assertNotEmpty($result);
+    $this->assertEmpty($result, "Co with id 2 should not exist");
+
+    // Create Co with id 2.
+    $co = array(
+      'Co' => array(
+        'name'        => 'Test CO',
+        'description' => 'Test CO for CoGroupTest',
+        'status'      => StatusEnum::Active
+      )
+    );
+    $Co->save($co, array('callbacks' => false)); // do not call callbacks
+    $this->assertEquals(2, $Co->id, "Newly created Co should have id 2");
 
     // Find all groups with Co id 2, should not find any.
     $args = array();
@@ -99,29 +145,29 @@ class CoGroupTest extends CakeTestCase {
     $args['contain'] = false;
     $result = $this->CoGroup->find('all', $args);
     $expected = array();
-    $this->assertEquals($expected, $result);
+    $this->assertEquals($expected, $result, "Should not find any groups in the Co");
 
-    // Call setup() on the Cou with id 1 and Co with id 2 from the fixture.
+    // Add default groups to Co with id 2.
     $return = $this->CoGroup->addDefaults(2);
-    // TODO $this->assertTrue($return);
+    $this->assertTrue($return);
 
-    // Find all groups with Cou id 1, should find the default groups.
-    $result = $this->CoGroup->find('all', $args);
-    $this->assertNotNull($result);
-    $this->assertNotEmpty($result);
+    // Find all groups with Cou id 2, should find the default groups.
+    $actual = $this->CoGroup->find('all', $args);
+    $this->assertNotNull($actual);
+    $this->assertNotEmpty($actual);
 
     // Ignore 'created' and 'modified' timestamps.
-    $result = Hash::remove($result, '{n}.CoGroup.created');
-    $result = Hash::remove($result, '{n}.CoGroup.modified');
+    $actual = Hash::remove($actual, '{n}.CoGroup.created');
+    $actual = Hash::remove($actual, '{n}.CoGroup.modified');
 
     $expected = array(
       array(
         'CoGroup' => array(
-          'id'               => '1',
+          'id'               => '4',
           'co_id'            => '2',
           'cou_id'           => NULL,
           'name'             => 'CO:admins',
-          'description'      => 'Test CO 1 Administrators',
+          'description'      => 'Test CO Administrators',
           'open'             => false,
           'status'           => 'A',
           'group_type'       => 'A',
@@ -133,11 +179,11 @@ class CoGroupTest extends CakeTestCase {
         )),
       array(
         'CoGroup' => array(
-          'id'               => '2',
+          'id'               => '5',
           'co_id'            => '2',
           'cou_id'           => NULL,
           'name'             => 'CO:members:active',
-          'description'      => 'Test CO 1 Active Members',
+          'description'      => 'Test CO Active Members',
           'open'             => false,
           'status'           => 'A',
           'group_type'       => 'MA',
@@ -149,11 +195,11 @@ class CoGroupTest extends CakeTestCase {
         )),
       array(
         'CoGroup' => array(
-          'id'               => '3',
+          'id'               => '6',
           'co_id'            => '2',
           'cou_id'           => NULL,
           'name'             => 'CO:members:all',
-          'description'      => 'Test CO 1 Members',
+          'description'      => 'Test CO Members',
           'open'             => false,
           'status'           => 'A',
           'group_type'       => 'M',
@@ -165,7 +211,7 @@ class CoGroupTest extends CakeTestCase {
         )),
     );
 
-    $this->assertEquals($expected, $result);
+    $this->assertEquals($expected, $actual);
   }
 
   /**
@@ -173,16 +219,57 @@ class CoGroupTest extends CakeTestCase {
    */
   public function testAddDefaultsToCou() {
 
+    // Get a Co object.
+    $Co = ClassRegistry::init('Co');
+
     // Get a Cou object.
     $Cou = ClassRegistry::init('Cou');
 
-    // Find Cou with id 1 from the fixture.
+    // Find Co with id 1 from the fixture, should exist.
+    $args = array();
+    $args['conditions']['Co.id'] = '1';
+    $args['contain'] = false;
+    $result = $Co->find('first', $args);
+    $this->assertNotNull($result, "Co with id 1 should exist");
+    $this->assertNotEmpty($result, "Co with id 1 should exist");
+
+    // Find Co with id 2, should not exist.
+    $args = array();
+    $args['conditions']['Co.id'] = '2';
+    $args['contain'] = false;
+    $result = $Co->find('first', $args);
+    $this->assertEmpty($result, "Co with id 2 should not exist");
+
+    // Create Co with id 2.
+    $co = array(
+      'Co' => array(
+        'name'        => 'Test CO',
+        'description' => 'Test CO for CoGroupTest',
+        'status'      => StatusEnum::Active
+      )
+    );
+    $Co->save($co, array('callbacks' => false)); // do not call callbacks
+    $this->assertEquals(2, $Co->id, "Newly created Co should have id 2");
+
+    // Find Cou with id 1, should not exist.
     $args = array();
     $args['conditions']['Cou.id'] = '1';
     $args['contain'] = false;
     $result = $Cou->find('first', $args);
-    $this->assertNotNull($result);
-    $this->assertNotEmpty($result);
+    $this->assertEmpty($result, "Cou with id 1 should not exist");
+
+    // Create Cou with id 1.
+    $cou = array(
+      'Cou' => array(
+        'co_id'       => 2,
+        'name'        => 'Test COU',
+        'description' => 'Test COU for CoGroupTest',
+        'status'      => StatusEnum::Active
+      )
+    );
+    $Cou->save($cou, array('callbacks' => false));
+    $cou_id = $Cou->id;
+    $this->assertEquals(1, $cou_id, "Newly created Cou should have id 1");
 
     // Find all groups with Cou id 1, should not find any.
     $args = array();
@@ -191,29 +278,29 @@ class CoGroupTest extends CakeTestCase {
     $args['contain'] = false;
     $result = $this->CoGroup->find('all', $args);
     $expected = array();
-    $this->assertEquals($expected, $result);
+    $this->assertEquals($expected, $result, "Should not find any groups with Cou id 1");
 
-    // Call setup() on the Cou with id 1 and Co with id 2 from the fixture.
+    // Add default groups to Cou with id 1 and Co with id 2.
     $return = $this->CoGroup->addDefaults(2, 1);
-    // TODO $this->assertTrue($return);
+    $this->assertTrue($return, "CoGroup->AddDefaults() should return true");
 
     // Find all groups with Cou id 1, should find the default groups.
-    $result = $this->CoGroup->find('all', $args);
-    $this->assertNotNull($result);
-    $this->assertNotEmpty($result);
+    $actual = $this->CoGroup->find('all', $args);
+    $this->assertNotNull($actual, "Should find groups with Cou id 1");
+    $this->assertNotEmpty($actual, "Should find groups with Cou id 1");
 
     // Ignore 'created' and 'modified' timestamps.
-    $result = Hash::remove($result, '{n}.CoGroup.created');
-    $result = Hash::remove($result, '{n}.CoGroup.modified');
+    $actual = Hash::remove($actual, '{n}.CoGroup.created');
+    $actual = Hash::remove($actual, '{n}.CoGroup.modified');
 
     $expected = array(
       array(
         'CoGroup' => array(
-          'id'               => '1',
+          'id'               => '4',
           'co_id'            => '2',
           'cou_id'           => '1',
-          'name'             => 'CO:COU:Test COU 1:admins',
-          'description'      => 'Test COU 1 Administrators',
+          'name'             => 'CO:COU:Test COU:admins',
+          'description'      => 'Test COU Administrators',
           'open'             => false,
           'status'           => 'A',
           'group_type'       => 'A',
@@ -225,11 +312,11 @@ class CoGroupTest extends CakeTestCase {
         )),
       array(
         'CoGroup' => array(
-          'id'               => '2',
+          'id'               => '5',
           'co_id'            => '2',
           'cou_id'           => '1',
-          'name'             => 'CO:COU:Test COU 1:members:active',
-          'description'      => 'Test COU 1 Active Members',
+          'name'             => 'CO:COU:Test COU:members:active',
+          'description'      => 'Test COU Active Members',
           'open'             => false,
           'status'           => 'A',
           'group_type'       => 'MA',
@@ -241,11 +328,11 @@ class CoGroupTest extends CakeTestCase {
         )),
       array(
         'CoGroup' => array(
-          'id'               => '3',
+          'id'               => '6',
           'co_id'            => '2',
           'cou_id'           => '1',
-          'name'             => 'CO:COU:Test COU 1:members:all',
-          'description'      => 'Test COU 1 Members',
+          'name'             => 'CO:COU:Test COU:members:all',
+          'description'      => 'Test COU Members',
           'open'             => false,
           'status'           => 'A',
           'group_type'       => 'M',
@@ -257,7 +344,7 @@ class CoGroupTest extends CakeTestCase {
         )),
     );
 
-    $this->assertEquals($expected, $result);
+    $this->assertEquals($expected, $actual);
   }
 
   /**
@@ -272,34 +359,99 @@ class CoGroupTest extends CakeTestCase {
    * Test obtaining the ID of the admin group for CO with ID 1.
    */
   public function testAdminCoGroupIdCo() {
-    $expected = 1;
-    $this->CoGroup->addDefaults(1);
     $actual = $this->CoGroup->adminCoGroupId(1);
-    $this->assertEquals($expected, $actual);
+    $this->assertEquals(1, $actual, "Id of admin group should be 1");
   }
 
   /**
    * Test obtaining the ID of the admin group for CO with ID 2.
    */
-  public function testAdminCoGroupIdCos() {
-    $expected = 4;
-    $this->CoGroup->addDefaults(1);
-    $this->CoGroup->addDefaults(2);
+  public function testAdminCoGroupIdCo2() {
+    // Get a Co object.
+    $Co = ClassRegistry::init('Co');
+
+    // Find Co with id 2, should not exist.
+    $args = array();
+    $args['conditions']['Co.id'] = '2';
+    $args['contain'] = false;
+    $result = $Co->find('first', $args);
+    $this->assertEmpty($result, "Co with id 2 should not exist");
+
+    // Create Co with id 2.
+    $co = array(
+      'Co' => array(
+        'name'        => 'Test CO',
+        'description' => 'Test CO for CoGroupTest',
+        'status'      => StatusEnum::Active
+      )
+    );
+    $Co->save($co);
+    $this->assertEquals(2, $Co->id, "Newly created Co should have id 2");
+
+    // Add default groups to Co with id 2.
+    $return = $this->CoGroup->addDefaults(2);
+    $this->assertTrue($return, "CoGroup->AddDefaults() should return true");
+
     $actual = $this->CoGroup->adminCoGroupId(2);
-    $this->assertEquals($expected, $actual);
+    $this->assertEquals(4, $actual, "Id of admin group should be 4");
   }
 
   /**
    * Test obtaining the ID of the COU admin group.
    */
   public function testAdminCoGroupIdCou() {
-    $expected = 7;
-    $this->CoGroup->addDefaults(1);
-    $this->CoGroup->addDefaults(2);
-    $this->CoGroup->addDefaults(2, 1);
+
+    // Get a Co object.
+    $Co = ClassRegistry::init('Co');
+
+    // Get a Cou object.
+    $Cou = ClassRegistry::init('Cou');
+
+    // Find Co with id 2, should not exist.
+    $args = array();
+    $args['conditions']['Co.id'] = '2';
+    $args['contain'] = false;
+    $result = $Co->find('first', $args);
+    $this->assertEmpty($result, "Co with id 2 should not exist");
+
+    // Create Co with id 2.
+    $co = array(
+      'Co' => array(
+        'name'        => 'Test CO',
+        'description' => 'Test CO for CoGroupTest',
+        'status'      => StatusEnum::Active
+      )
+    );
+    $Co->save($co, array('callbacks' => false)); // do not call callbacks
+    $this->assertEquals(2, $Co->id, "Newly created Co should have id 2");
+
+    // Find Cou with id 1, should not exist.
+    $args = array();
+    $args['conditions']['Cou.id'] = '1';
+    $args['contain'] = false;
+    $result = $Cou->find('first', $args);
+    $this->assertEmpty($result, "Cou with id 1 should not exist");
+
+    // Create Cou with id 1.
+    $cou = array(
+      'Cou' => array(
+        'co_id'       => 2,
+        'name'        => 'Test COU',
+        'description' => 'Test COU for CoGroupTest',
+        'status'      => StatusEnum::Active
+      )
+    );
+    $Cou->save($cou, array('callbacks' => false)); // do not call callbacks
+    $cou_id = $Cou->id;
+    $this->assertEquals(1, $cou_id, "Newly created Cou should have id 1");
+
+    // Add default groups to Co with id 2 and Cou with id 1.
+    $return = $this->CoGroup->addDefaults(2, 1);
+    $this->assertTrue($return, "CoGroup->AddDefaults() should return true");
+
     $actual = $this->CoGroup->adminCoGroupId(2, 1);
 
-    $this->assertEquals($expected, $actual);
+    $this->assertEquals(4, $actual);
   }
 
   /**
@@ -384,41 +536,46 @@ class CoGroupTest extends CakeTestCase {
   }
 
   /**
-   * Test creating a group.
+   * Test creating a Co group.
    */
   public function testCreateCoGroup() {
 
     // Assert that the group does not already exist.
     $args = array();
-    $args['conditions']['name'] = 'testCreateGroup';
+    $args['conditions']['name'] = 'Test Group';
     $args['conditions']['CoGroup.deleted'] = false;
     $args['contain'] = false;
-    $result = $this->CoGroup->find('all', $args);
+    $actual = $this->CoGroup->find('first', $args);
     $expected = array();
-    $this->assertEquals($expected, $result);
+    $this->assertEquals($expected, $actual, "Test group should not exist");
 
-    // Create the group
-    $group = array();
-    $group['auto'] = false;
-    $group['co_id'] = 2;
-    $group['description'] = 'Test Create Group';
-    $group['group_type'] = GroupEnum::Standard;
-    $group['name'] = 'testCreateGroup';
-    $group['open'] = false;
-    $group['status'] = SuspendableStatusEnum::Active;
+    // Create the group.
+    $group = array(
+      'CoGroup' => array(
+        'co_id'       => '1',
+        'name'        => 'Test Group',
+        'description' => 'Test Group Description',
+        'group_type'  => GroupEnum::Standard,
+        'auto'        => false,
+        'open'        => false,
+        'status'      => SuspendableStatusEnum::Active
+      )
+    );
+    $result = $this->CoGroup->clear();
+    $this->assertTrue($result, "Expected to clear the group");
+    $actual = $this->CoGroup->save($group);
 
     // Test result of save operation.
-    $result = $this->CoGroup->save($group);
-    $this->assertNotNull($result);
-    $this->assertNotEmpty($result);
-    $result = Hash::remove($result, 'CoGroup.created'); // Ignore 'created' timestamp
-    $result = Hash::remove($result, 'CoGroup.modified'); // Ignore 'modified' timestamp
+    $this->assertNotNull($actual, "Test group should exist after saving");
+    $this->assertNotEmpty($actual, "Test group should exist after saving");
+    $actual = Hash::remove($actual, 'CoGroup.created'); // Ignore 'created' timestamp
+    $actual = Hash::remove($actual, 'CoGroup.modified'); // Ignore 'modified' timestamp
     $expected = array(
       'CoGroup' => array(
-        'id'               => '1',
-        'co_id'            => '2',
-        'name'             => 'testCreateGroup',
-        'description'      => 'Test Create Group',
+        'id'               => '4',
+        'co_id'            => '1',
+        'name'             => 'Test Group',
+        'description'      => 'Test Group Description',
         'open'             => false,
         'status'           => 'A',
         'group_type'       => 'S',
@@ -429,58 +586,66 @@ class CoGroupTest extends CakeTestCase {
         'actor_identifier' => NULL,
       ),
     );
-    $this->assertEquals($expected, $result);
+    $this->assertEquals($expected, $actual, "Unexpected results after saving the group");
 
-    // Find all groups with Co id 2, should find one.
-    $result = $this->CoGroup->find('all', $args);
+    // Find the group.
+    $actual = $this->CoGroup->find('first', $args);
 
     // Test result of find operation.
-    $result = Hash::remove($result, '{n}.CoGroup.created'); // Ignore 'created' timestamp
-    $result = Hash::remove($result, '{n}.CoGroup.modified'); // Ignore 'modified' timestamp
-    $expected = array($expected);
-    $expected['0']['CoGroup']['cou_id'] = NULL; // Add COU ID to expected
-    $this->assertEquals($expected, $result);
+    $this->assertNotNull($actual, "Test group not found");
+    $this->assertNotEmpty($actual, "Test group not found");
+    $actual = Hash::remove($actual, 'CoGroup.created'); // Ignore 'created' timestamp
+    $actual = Hash::remove($actual, 'CoGroup.modified'); // Ignore 'modified' timestamp
+    $expected['CoGroup']['cou_id'] = NULL;
+    $this->assertEquals($expected, $actual, "Unexpected results after finding the group");
   }
 
-
   /**
-   * Test creating a group.
+   * Test creating a Cou group.
    */
   public function testCreateCouGroup() {
 
+    // Create test Cou with id 1.
+    $this->createTestCou();
+
     // Assert that the group does not already exist.
     $args = array();
-    $args['conditions']['name'] = 'testCreateGroup';
+    $args['conditions']['name'] = 'Test Group';
     $args['conditions']['CoGroup.deleted'] = false;
     $args['contain'] = false;
-    $result = $this->CoGroup->find('all', $args);
+    $actual = $this->CoGroup->find('first', $args);
     $expected = array();
-    $this->assertEquals($expected, $result);
+    $this->assertEquals($expected, $actual, "Test group should not exist");
 
-    // Create the group
-    $group = array();
-    $group['auto'] = false;
-    $group['co_id'] = 2;
-    $group['cou_id'] = 1;
-    $group['description'] = 'Test Create Group';
-    $group['group_type'] = GroupEnum::Standard;
-    $group['name'] = 'testCreateGroup';
-    $group['open'] = false;
-    $group['status'] = SuspendableStatusEnum::Active;
+    // Create the group.
+    $group = array(
+      'CoGroup' => array(
+        'co_id'       => '1',
+        'cou_id'      => '1',
+        'name'        => 'Test Group',
+        'description' => 'Test Group Description',
+        'group_type'  => GroupEnum::Standard,
+        'auto'        => false,
+        'open'        => false,
+        'status'      => SuspendableStatusEnum::Active
+      )
+    );
+    $result = $this->CoGroup->clear();
+    $this->assertTrue($result, "Expected to clear the group");
+    $actual = $this->CoGroup->save($group);
 
     // Test result of save operation.
-    $result = $this->CoGroup->save($group);
-    $this->assertNotNull($result);
-    $this->assertNotEmpty($result);
-    $result = Hash::remove($result, 'CoGroup.created'); // Ignore 'created' timestamp
-    $result = Hash::remove($result, 'CoGroup.modified'); // Ignore 'modified' timestamp
+    $this->assertNotNull($actual, "Test group should exist after saving");
+    $this->assertNotEmpty($actual, "Test group should exist after saving");
+    $actual = Hash::remove($actual, 'CoGroup.created'); // Ignore 'created' timestamp
+    $actual = Hash::remove($actual, 'CoGroup.modified'); // Ignore 'modified' timestamp
     $expected = array(
       'CoGroup' => array(
-        'id'               => '1',
-        'co_id'            => '2',
+        'id'               => '7',
+        'co_id'            => '1',
         'cou_id'           => '1',
-        'name'             => 'testCreateGroup',
-        'description'      => 'Test Create Group',
+        'name'             => 'Test Group',
+        'description'      => 'Test Group Description',
         'open'             => false,
         'status'           => 'A',
         'group_type'       => 'S',
@@ -491,16 +656,17 @@ class CoGroupTest extends CakeTestCase {
         'actor_identifier' => NULL,
       ),
     );
-    $this->assertEquals($expected, $result);
+    $this->assertEquals($expected, $actual, "Unexpected results after saving the group");
 
-    // Find all groups with Co id 2, should find one.
-    $result = $this->CoGroup->find('all', $args);
+    // Find the group.
+    $actual = $this->CoGroup->find('first', $args);
 
     // Test result of find operation.
-    $result = Hash::remove($result, '{n}.CoGroup.created'); // Ignore 'created' timestamp
-    $result = Hash::remove($result, '{n}.CoGroup.modified'); // Ignore 'modified' timestamp
-    $expected = array($expected);
-    $this->assertEquals($expected, $result);
+    $this->assertNotNull($actual, "Test group not found");
+    $this->assertNotEmpty($actual, "Test group not found");
+    $actual = Hash::remove($actual, 'CoGroup.created'); // Ignore 'created' timestamp
+    $actual = Hash::remove($actual, 'CoGroup.modified'); // Ignore 'modified' timestamp
+    $this->assertEquals($expected, $actual, "Unexpected results after finding the group");
   }
 
   /**
@@ -513,23 +679,21 @@ class CoGroupTest extends CakeTestCase {
 
     // Find the newly created group.
     $args = array();
-    $args['conditions']['CoGroup.name'] = 'testCreateGroup';
-    $args['conditions']['CoGroup.co_id'] = '2';
-    $args['conditions']['CoGroup.cou_id'] = 1;
+    $args['conditions']['name'] = 'Test Group';
     $args['conditions']['CoGroup.deleted'] = false;
     $args['contain'] = false;
-    $result = $this->CoGroup->find('first', $args);
-    $this->assertNotNull($result);
-    $this->assertNotEmpty($result);
-    $result = Hash::remove($result, 'CoGroup.created'); // Ignore 'created' timestamp
-    $result = Hash::remove($result, 'CoGroup.modified'); // Ignore 'modified' timestamp
+    $actual = $this->CoGroup->find('first', $args);
+    $this->assertNotNull($actual, "Test group not found");
+    $this->assertNotEmpty($actual, "Test group not found");
+    $actual = Hash::remove($actual, 'CoGroup.created'); // Ignore 'created' timestamp
+    $actual = Hash::remove($actual, 'CoGroup.modified'); // Ignore 'modified' timestamp
     $expected = array(
       'CoGroup' => array(
-        'id'               => '1',
-        'co_id'            => '2',
+        'id'               => '7',
+        'co_id'            => '1',
         'cou_id'           => '1',
-        'name'             => 'testCreateGroup',
-        'description'      => 'Test Create Group',
+        'name'             => 'Test Group',
+        'description'      => 'Test Group Description',
         'open'             => false,
         'status'           => 'A',
         'group_type'       => 'S',
@@ -540,22 +704,40 @@ class CoGroupTest extends CakeTestCase {
         'actor_identifier' => NULL,
       ),
     );
-    $this->assertEquals($expected, $result);
+    $this->assertEquals($expected, $actual, "Unexpected results after finding the group");
 
     // Modify the group.
-    $result['CoGroup']['description'] = 'New Description';
+    $actual['CoGroup']['description'] = 'New Description';
+    $result = $this->CoGroup->save($actual);
 
-    if (!$this->CoGroup->save($result)) {
-      $this->fail("Test failed with errors :\n".var_export($this->CoGroup->validationErrors, true));
-    }
-
-    // Find group after modification and assert modification
-    $result = $this->CoGroup->find('first', $args);
-    $result = Hash::remove($result, 'CoGroup.created'); // Ignore 'created' timestamp
+    // Test result of save operation.
     $result = Hash::remove($result, 'CoGroup.modified'); // Ignore 'modified' timestamp
+    $expected = array(
+      'CoGroup' => array(
+        'id'               => '7',
+        'co_id'            => '1',
+        'cou_id'           => '1',
+        'name'             => 'Test Group',
+        'description'      => 'New Description',
+        'open'             => false,
+        'status'           => 'A',
+        'group_type'       => 'S',
+        'auto'             => false,
+        'co_group_id'      => NULL,
+        'revision'         => '1',
+        'deleted'          => false,
+        'actor_identifier' => NULL,
+      ),
+    );
+    $this->assertEquals($expected, $result, "Unexpected results after saving the modified group");
+
+    // Find group after modification and assert modification.
+    $actual = $this->CoGroup->find('first', $args);
+    $actual = Hash::remove($actual, 'CoGroup.created'); // Ignore 'created' timestamp
+    $actual = Hash::remove($actual, 'CoGroup.modified'); // Ignore 'modified' timestamp
     $expected['CoGroup']['revision'] = '1';
     $expected['CoGroup']['description'] = 'New Description';
-    $this->assertEquals($expected, $result);
+    $this->assertEquals($expected, $actual);
   }
 
 }

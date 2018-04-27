@@ -1,6 +1,6 @@
 <?php
 /**
- * COmanage Registry all tests
+ * COmanage Registry All Tests
  *
  * Portions licensed to the University Corporation for Advanced Internet
  * Development, Inc. ("UCAID") under one or more contributor license agreements.

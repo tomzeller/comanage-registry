@@ -28,12 +28,13 @@
 App::uses('Cou', 'Model');
 
 class CouTest extends CakeTestCase {
+
   public $fixtures = array(
-    'app.Cou',
-    'app.Co',
+    'app.CoTest/CoTestCo',
+    'app.CouTest/CouTestCou',
+    'app.Empty/EmptyCoGroup',
     'app.CoEnrollmentFlow',
     'app.CoExpirationPolicy',
-    'app.CoGroup',
     'app.CoGroupMember',
     'app.CoNotification',
     'app.CoProvisioningExport',
