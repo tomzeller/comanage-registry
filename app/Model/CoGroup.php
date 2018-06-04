@@ -365,6 +365,8 @@ class CoGroup extends AppModel {
         }
       }
     }
+
+    return true;
   }
   
   /**
