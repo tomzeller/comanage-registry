@@ -144,6 +144,18 @@ class ADODB2_postgres extends ADODB_DataDict {
 				$sql[] = $alter . str_replace('DEFAULT '.$default,'',$v);
 				$sql[] = 'UPDATE '.$tabname.' SET '.$colname.'='.$default;
 				$sql[] = 'ALTER TABLE '.$tabname.' ALTER COLUMN '.$colname.' SET DEFAULT ' . $default;
+			}
+			// SERIAL is not a true type in PostgreSQL and is only allowed when creating a new table.
+			// See http://www.postgresql.org/docs/9.4/static/datatype-numeric.html, 8.1.4. Serial Types.
+			elseif (preg_match('/^([^ ]+) .*SERIAL/i',$v,$matches)) {
+				list(,$colname,$default) = $matches;
+				$sql[] = 'CREATE SEQUENCE '.$tabname.'_'.$colname.'_seq';
+				$sql[] = $alter.$colname.' INTEGER';
+				$sql[] = 'ALTER SEQUENCE '.$tabname.'_'.$colname.'_seq OWNED BY '.$tabname.'.'.$colname;
+				$sql[] = 'UPDATE '.$tabname.' SET '.$colname.' = nextval(\''.$tabname.'_'.$colname.'_seq\')';
+				$sql[] = 'ALTER TABLE '.$tabname.' ALTER COLUMN '.$colname.' SET DEFAULT nextval(\''.$tabname.'_'.$colname.'_seq\')';
+				$sql[] = 'ALTER TABLE '.$tabname.' ALTER COLUMN '.$colname.' SET NOT NULL';
+				$not_null = false;
 			} else {
 				$sql[] = $alter . $v;
 			}
@@ -197,6 +209,13 @@ class ADODB2_postgres extends ADODB_DataDict {
 				if ($not_null = preg_match('/NOT NULL/i',$v)) {
 					$v = preg_replace('/NOT NULL/i','',$v);
 				}
+
+				// SERIAL is not a true type in PostgreSQL and is only allowed when creating a new table.
+				// See http://www.postgresql.org/docs/9.4/static/datatype-numeric.html, 8.1.4. Serial Types.
+				if (preg_match('/SERIAL/i',$v)) {
+					continue;
+				}
+
 				 // this next block doesn't work - there is no way that I can see to
 				 // explicitly ask a column to be null using $flds
 				else if ($set_null = preg_match('/NULL/i',$v)) {
