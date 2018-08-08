@@ -216,6 +216,17 @@ class ADODB2_postgres extends ADODB_DataDict {
 					continue;
 				}
 
+				// Attempt to create a foreign key constraint if it does not already exist.
+				if (preg_match('/^\s*(\S+)\s*\S*\s* REFERENCES (\S+)/i',$v, $matches)) {
+					list(,$colname,$fkey) = $matches;
+					$constraint = $tabname.'_'.$colname.'_fkey';
+					if(!$this->DoesConstraintExist($constraint)) {
+						$alter = 'ALTER TABLE ' . $tabname . ' ADD CONSTRAINT '.$constraint.' FOREIGN KEY (' .$colname.') REFERENCES '.$fkey;
+						$sql[] = $alter;
+					}
+					continue;
+				}
+
 				 // this next block doesn't work - there is no way that I can see to
 				 // explicitly ask a column to be null using $flds
 				else if ($set_null = preg_match('/NULL/i',$v)) {
@@ -602,6 +613,22 @@ CREATE [ UNIQUE ] INDEX index_name ON table
 					$sql[] = $alter . $this->dropCol . ' ' . $v->name;
 		}
 		return $sql;
+	}
+
+	/**
+	 * Whether a constraint exists.
+	 *
+	 * @param $constraint the name of the constraint
+	 * @return boolean true if constraint exists, false otherwise.
+	 */
+	function DoesConstraintExist($constraint) {
+		$rs = $this->connection->GetOne(
+			"SELECT 1 FROM pg_constraint WHERE conname = '$constraint'"
+		);
+		if (is_null($rs)) {
+			return false;
+		}
+		return true;
 	}
 
 }
