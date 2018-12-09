@@ -148,7 +148,7 @@ class ADODB2_postgres extends ADODB_DataDict {
 			// SERIAL is not a true type in PostgreSQL and is only allowed when creating a new table.
 			// See http://www.postgresql.org/docs/9.4/static/datatype-numeric.html, 8.1.4. Serial Types.
 			elseif (preg_match('/^([^ ]+) .*SERIAL/i',$v,$matches)) {
-				list(,$colname,$default) = $matches;
+				$colname = $matches[1];
 				$sql[] = 'CREATE SEQUENCE '.$tabname.'_'.$colname.'_seq';
 				$sql[] = $alter.$colname.' INTEGER';
 				$sql[] = 'ALTER SEQUENCE '.$tabname.'_'.$colname.'_seq OWNED BY '.$tabname.'.'.$colname;
