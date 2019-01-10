@@ -62,6 +62,16 @@
                        $db->config['login'],
                        $db->config['password'],
                        $db->config['database'])) {
+
+        // Since we'll be doing some direct DB manipulation, find the table prefix
+        $prefix = isset($db->config['prefix']) ? $db->config['prefix'] : "";
+
+        // Drop users view
+        $this->out(_txt('op.db.drop.users.view'));
+        if (!$dbc->Execute("DROP VIEW IF EXISTS " . $prefix . "users")) {
+          $this->out("Unable to drop users view");
+        }
+
         // Plugins can have their own schema files, so we need to account for that
         
         $schemaSources = array_merge(array("."), App::objects('plugin'));
@@ -135,7 +145,19 @@
             break;
           }
         }
-        
+
+        // Create users view
+        $this->out(_txt('op.db.create.users.view'));
+        if (!$dbc->Execute("CREATE VIEW " . $prefix . "users AS
+SELECT a.username as username, a.password as password, a.id as api_user_id
+FROM cm_api_users a
+UNION SELECT i.identifier as username, '*' as password, null as api_user_id
+FROM cm_identifiers i
+WHERE i.login=true;
+")) {
+          $this->out(_txt('er.db.create.users.view'));
+        }
+
         $dbc->Disconnect();
       }
       else {

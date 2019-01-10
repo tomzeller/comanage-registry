@@ -853,6 +853,8 @@ original notification at
   'er.deleted-a' =>   'Deleted "%1$s"',  // XXX is this an er or an rs?
   'er.db.connect' =>  'Failed to connect to database: %1$s',
   'er.db.schema' =>   'Possibly failed to update database schema',
+  'er.db.create.users.view' => 'Failed to create users view',
+  'er.db.drop.users.view' => 'Failed to drop users view',
   'er.db.save' =>     'Database save failed',
   'er.db.save-a' =>   'Database save failed: %1$s',
   'er.ea.alter' =>    'Failed to alter table for attribute',
@@ -1602,6 +1604,8 @@ original notification at
   'op.dashboard.select' => 'Welcome to %1$s. Please select an action from the menus.',
   'op.db.ok' =>       'Database schema update successful',
   'op.db.schema' =>   'Loading schema from file %1$s...' . "\nThis make take a few minutes for large datasets, please do not interrupt.",
+  'op.db.create.users.view' => 'Creating users view',
+  'op.db.drop.users.view' => 'Dropping users view',
   'op.decline' =>     'Decline',
   'op.delete' =>      'Delete',
   'op.delete-a' =>    'Delete %1$s',
@@ -1908,7 +1912,6 @@ original notification at
   'se.security.seed' =>   'Creating security seed file',
   'se.security.seed.exists' => 'Security seed file already exists',
   'se.done' =>            'Setup complete',
-  'se.users.view' =>      'Creating users view',
   
   // Shell
   
