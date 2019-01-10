@@ -63,6 +63,9 @@
                        $db->config['password'],
                        $db->config['database'])) {
 
+        // Whether all schemas and views were updated successfully
+        $success = true;
+
         // Since we'll be doing some direct DB manipulation, find the table prefix
         $prefix = isset($db->config['prefix']) ? $db->config['prefix'] : "";
 
@@ -70,6 +73,7 @@
         $this->out(_txt('op.db.drop.users.view'));
         if (!$dbc->Execute("DROP VIEW IF EXISTS " . $prefix . "users")) {
           $this->out("Unable to drop users view");
+          $success = false;
         }
 
         // Plugins can have their own schema files, so we need to account for that
@@ -138,10 +142,11 @@
           
           switch($schema->ExecuteSchema($sql)) {
           case 2: // !!!
-            $this->out(_txt('op.db.ok'));
+            $this->out(_txt('op.db.ok') . " for file " . $schemaFile);
             break;
           default:
-            $this->out(_txt('er.db.schema'));
+            $this->out(_txt('er.db.schema'). " for file " . $schemaFile);
+            $success = false;
             break;
           }
         }
@@ -156,6 +161,14 @@ FROM cm_identifiers i
 WHERE i.login=true;
 ")) {
           $this->out(_txt('er.db.create.users.view'));
+          $success = false;
+        }
+
+        // Print whether all schemas and views were updated successfully
+        if ($success) {
+          $this->out(_txt('op.db.ok'));
+        } else {
+          $this->out(_txt('er.db.schema'));
         }
 
         $dbc->Disconnect();
