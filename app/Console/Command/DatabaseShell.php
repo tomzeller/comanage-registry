@@ -98,7 +98,7 @@
               }
             }
             
-            // No schema file fonud
+            // No schema file found
             // See if the file exists. If it doesn't, there's no schema to load.
             if(!$found) {
               print "No schema found for " . $schemaSource . "\n";
